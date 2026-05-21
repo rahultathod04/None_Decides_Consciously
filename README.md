@@ -1,6 +1,6 @@
 # 🧠 None Decides Consciously
 
-> *"Human behavior is a function of emotional state — not free will."*
+> *"A Data Science project — collecting, cleaning, analysing and predicting real student data to prove that Human behavior is a function of emotional state, not free will."*
 
 ## 📌 Project Goal
 To statistically prove that human decisions (social media usage, academic 
