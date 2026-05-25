@@ -37,5 +37,6 @@ None_Decides_Consciously/
 ## 📈 Progress Log
 | Day | Phase | What was done |
 |-----|-------|---------------|
-| Day 1 | Setup | Project structure + GitHub setup |
-| Day 2 | Data Loading + Cleaning | Loaded 1000 rows, 21 columns, fixed outliers, handled missing values, saved clean dataset |
+| Day 1 | Setup + Data Loading | Project structure + GitHub setup |
+| Day 2 | Data Cleaning | Loaded 1000 rows, 21 columns, fixed outliers, handled missing values, saved clean dataset |
+| Day 3 | EDA | Plotted stress, sleep distributions, proved H1 and H2 visually, built correlation heatmap |
