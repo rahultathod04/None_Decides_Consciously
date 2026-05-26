@@ -37,6 +37,7 @@ None_Decides_Consciously/
 ## 📈 Progress Log
 | Day | Phase | What was done |
 |-----|-------|---------------|
-| Day 1 | Setup + Data Loading | Project structure + GitHub setup |
-| Day 2 | Data Cleaning | Loaded 1000 rows, 21 columns, fixed outliers, handled missing values, saved clean dataset |
-| Day 3 | EDA | Plotted stress, sleep distributions, proved H1 and H2 visually, built correlation heatmap |
+| Day 1 | Setup | Project structure + GitHub setup |
+| Day 2 | Data Loading + Cleaning | Loaded 1000 rows 21 columns, fixed outliers, handled missing values, saved clean dataset |
+| Day 3 | EDA | Plotted distributions, scatter plots, correlation heatmap - H1 and H2 strongly proved visually |
+| Day 4 | Statistical Testing | Pearson correlation + P-value testing - H1 0.56, H2 0.52, H3 0.15 all proved with p < 0.001 |
