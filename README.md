@@ -43,3 +43,4 @@ None_Decides_Consciously/
 | Day 4 | Statistical Testing | Pearson correlation + P-value testing - H1 0.56, H2 0.52, H3 0.15 all proved with p < 0.001 |
 | Day 5 | Feature Engineering | Created 5 new features - sleep_debt, stress_sleep_ratio, state_score, screen_category, at_risk |
 | Day 6 | ML - AT RISK Classifier | Random Forest model, 98% accuracy, 100% recall, sleep is #1 risk factor |
+| Day 7 | Cluster Analysis | KMeans found 3 natural groups -Thriving 24%, Struggling 48%, Burned Out 29% |
