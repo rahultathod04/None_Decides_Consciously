@@ -46,3 +46,4 @@ None_Decides_Consciously/
 | Day 7 | Cluster Analysis | KMeans found 3 natural groups -Thriving 24%, Struggling 48%, Burned Out 29% |
 | Day 8 | Intervention Recommender | Built rule based recommender that gives personalized action plan for each student type |
 | Day 9 | Streamlit App | Built live web app with sliders,student type detection, action plan and comparison charts |
+     -AI counselor integration in progress 
