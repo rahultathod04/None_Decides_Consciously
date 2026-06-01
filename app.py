@@ -2,11 +2,14 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+import anthropic
+from dotenv import load_dotenv
+import os
+
+# Load API key from .env
+load_dotenv()
 
 # ================================
 # PAGE CONFIG
@@ -18,7 +21,7 @@ st.set_page_config(
 )
 
 # ================================
-# LOAD DATA AND TRAIN MODELS
+# LOAD DATA AND TRAIN MODEL
 # ================================
 @st.cache_data
 def load_and_train():
@@ -28,92 +31,50 @@ def load_and_train():
                 'mood_rating', 'sleep_debt', 'stress_sleep_ratio',
                 'state_score']
 
-    # AT RISK classifier
     X = df[features]
     y = df['at_risk']
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42)
     clf = RandomForestClassifier(n_estimators=100, random_state=42)
     clf.fit(X_train, y_train)
-
     return df, clf, features
 
 df, clf, features = load_and_train()
 
 # ================================
-# RECOMMENDATION FUNCTION
+# CLASSIFY FUNCTION
 # ================================
-def recommend(student_type):
-    recs = {
-        'Burned Out': {
-            'priority' : '🔴 urgent — act now',
-            'problem'  : 'too much stress + not enough sleep',
-            'steps'    : [
-                'sleep → try to get at least 7 hours tonight',
-                'stress → 10 min deep breathing before bed',
-                'social media → max 1 hour per day',
-                'screens → no phone 1 hour before sleep'
-            ],
-            'expected' : 'you will feel better in 3 to 4 weeks'
-        },
-        'Struggling': {
-            'priority' : '🟡 moderate — small changes needed',
-            'problem'  : 'sleep is inconsistent, stress is building',
-            'steps'    : [
-                'sleep → fix a sleep time and stick to it daily',
-                'stress → short walk 3 times a week',
-                'social media → cut down by 30 min each day',
-                'study → add 30 min of focused study daily'
-            ],
-            'expected' : 'things will improve in 2 to 3 weeks'
-        },
-        'Thriving': {
-            'priority' : '🟢 good — keep going',
-            'problem'  : 'no major problems found',
-            'steps'    : [
-                'sleep → keep sleeping 7 or more hours',
-                'stress → whatever you are doing, keep doing it',
-                'social media → your usage is already healthy',
-                'study → push yourself a little more now'
-            ],
-            'expected' : 'you are in the top 24% — maintain it'
-        }
-    }
-    return recs[student_type]
+def get_student_type(stress, sleep):
+    if stress >= 7 and sleep <= 5.5:
+        return 'Burned Out'
+    elif stress <= 4.5 and sleep >= 7:
+        return 'Thriving'
+    else:
+        return 'Struggling'
 
 # ================================
 # APP HEADER
 # ================================
 st.title("🧠 EmoDriven")
 st.markdown(
-    "*Proving that human behavior is driven by emotional state — not free will*"
+    "*proving that human behavior is driven by emotional state — not free will*"
 )
 st.divider()
 
 # ================================
-# SIDEBAR — USER INPUT
+# SIDEBAR SLIDERS
 # ================================
-st.sidebar.header("📋 Enter Your Details")
+st.sidebar.header("📋 enter your details")
+stress  = st.sidebar.slider("stress level",  1, 10, 5)
+anxiety = st.sidebar.slider("anxiety score", 1, 10, 5)
+sleep   = st.sidebar.slider("sleep hours",   3, 10, 6)
+mood    = st.sidebar.slider("mood rating",   1, 10, 5)
 
-stress  = st.sidebar.slider("Stress Level",   1, 10, 5)
-anxiety = st.sidebar.slider("Anxiety Score",  1, 10, 5)
-sleep   = st.sidebar.slider("Sleep Hours",    3, 10, 6)
-mood    = st.sidebar.slider("Mood Rating",    1, 10, 5)
-
-# Calculate engineered features
+# Calculate features
 sleep_debt         = 8 - sleep
 stress_sleep_ratio = stress / sleep
 state_score        = (stress + anxiety + (10 - mood)) / 3
-
-# ================================
-# CLASSIFY STUDENT TYPE
-# ================================
-if stress >= 7 and sleep <= 5.5:
-    student_type = 'Burned Out'
-elif stress <= 4.5 and sleep >= 7:
-    student_type = 'Thriving'
-else:
-    student_type = 'Struggling'
+student_type       = get_student_type(stress, sleep)
 
 # AT RISK prediction
 input_data = pd.DataFrame([[stress, anxiety, sleep, mood,
@@ -122,63 +83,171 @@ input_data = pd.DataFrame([[stress, anxiety, sleep, mood,
 at_risk = clf.predict(input_data)[0]
 
 # ================================
-# RESULTS SECTION
+# METRICS
 # ================================
 col1, col2, col3 = st.columns(3)
-col1.metric("Sleep Debt",   f"{sleep_debt:.1f} hrs")
-col2.metric("State Score",  f"{state_score:.1f} / 10")
-col3.metric("At Risk",      "Yes 🔴" if at_risk else "No 🟢")
-
-st.divider()
-
-# Student type
-colors = {
-    'Burned Out' : '🔴',
-    'Struggling' : '🟡',
-    'Thriving'   : '🟢'
-}
-st.subheader(f"{colors[student_type]} You are : {student_type}")
-
-# Recommendation
-rec = recommend(student_type)
-st.caption(rec['priority'])
-st.write(f"**Biggest problem:** {rec['problem']}")
-
-st.subheader("📋 Your Action Plan")
-for i, step in enumerate(rec['steps'], 1):
-    st.write(f"**Step {i}:** {step}")
-
-st.info(f"⏱️ {rec['expected']}")
+col1.metric("sleep debt",   f"{sleep_debt:.1f} hrs")
+col2.metric("state score",  f"{state_score:.1f} / 10")
+col3.metric("at risk",      "yes 🔴" if at_risk else "no 🟢")
 
 st.divider()
 
 # ================================
-# DATASET INSIGHTS
+# STUDENT TYPE
 # ================================
-st.subheader("📊 How You Compare to 1000 Students")
+icons = {'Burned Out': '🔴', 'Struggling': '🟡', 'Thriving': '🟢'}
+st.subheader(f"{icons[student_type]} you are : {student_type.lower()}")
+
+# ================================
+# AI COUNSELOR BUTTON
+# ================================
+st.divider()
+st.subheader("🤖 your personal ai counselor")
+st.caption("get a unique message written just for your exact situation")
+
+if st.button("get my personalised advice"):
+    with st.spinner("analysing your emotional state..."):
+        try:
+            from groq import Groq
+
+            client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+            prompt = f"""
+You are a student wellbeing counselor.
+A student has shared their emotional state with you.
+
+Their values:
+- stress level     : {stress} out of 10
+- anxiety score    : {anxiety} out of 10
+- sleep hours      : {sleep} hours per night
+- mood rating      : {mood} out of 10
+- sleep debt       : {sleep_debt:.1f} hours
+- state score      : {state_score:.1f} out of 10
+- student type     : {student_type}
+- at academic risk : {"yes" if at_risk else "no"}
+
+Write a short warm honest message directly to this student.
+- address their exact numbers and situation
+- tell them what their numbers actually mean
+- give 2 specific things they can do today
+- be encouraging but realistic
+- write like a caring friend not a robot
+- use simple everyday english, small letters
+- keep it under 120 words
+"""
+
+            response = client.chat.completions.create(
+                model="llama3-8b-8192",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=300
+            )
+
+            st.success(response.choices[0].message.content)
+
+        except Exception as e:
+            st.error(f"something went wrong: {e}")
+           try:
+    from groq import Groq
+
+    client = Groq(
+        api_key=os.getenv("GROQ_API_KEY")
+    )
+
+    prompt = f"""
+You are a student wellbeing counselor.
+A student has shared their emotional state with you.
+
+Their values:
+- stress level     : {stress} out of 10
+- anxiety score    : {anxiety} out of 10
+- sleep hours      : {sleep} hours per night
+- mood rating      : {mood} out of 10
+- sleep debt       : {sleep_debt:.1f} hours
+- state score      : {state_score:.1f} out of 10
+- student type     : {student_type}
+- at academic risk : {"yes" if at_risk else "no"}
+
+Write a short warm honest message directly to this student.
+- address their exact numbers and situation
+- tell them what their numbers actually mean for their life
+- give 2 very specific things they can do today
+- be encouraging but realistic
+- write like a caring friend not a robot
+- use simple everyday english, small letters
+- keep it under 120 words
+"""
+
+    response = client.chat.completions.create(
+        model="llama3-8b-8192",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=300
+    )
+
+    st.success(response.choices[0].message.content)
+
+except Exception as e:
+    st.error(f"something went wrong: {e}")
+
+
+            prompt = f"""
+You are a student wellbeing counselor.
+A student has shared their emotional state with you.
+
+Their values:
+- stress level     : {stress} out of 10
+- anxiety score    : {anxiety} out of 10
+- sleep hours      : {sleep} hours per night
+- mood rating      : {mood} out of 10
+- sleep debt       : {sleep_debt:.1f} hours
+- state score      : {state_score:.1f} out of 10
+- student type     : {student_type}
+- at academic risk : {"yes" if at_risk else "no"}
+
+Write a short warm honest message directly to this student.
+- address their exact numbers and situation
+- tell them what their numbers actually mean for their life
+- give 2 very specific things they can do today
+- be encouraging but realistic
+- write like a caring friend not a robot
+- use simple everyday english, small letters
+- keep it under 120 words
+"""
+
+            message = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=300,
+                messages=[{"role": "user", "content": prompt}]
+            )
+
+            st.success(message.content[0].text)
+
+        except Exception as e:
+            st.error(f"something went wrong: {e}")
+
+# ================================
+# COMPARISON CHARTS
+# ================================
+st.divider()
+st.subheader("📊 how you compare to 1000 students")
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 3))
 
-# Stress comparison
 axes[0].hist(df['stress_level'], bins=10,
              color='lightcoral', edgecolor='white')
-axes[0].axvline(x=stress, color='black',
-                linestyle='--', linewidth=2,
-                label=f'You ({stress})')
-axes[0].set_title('Stress Level')
+axes[0].axvline(x=stress, color='black', linestyle='--',
+                linewidth=2, label=f'you ({stress})')
+axes[0].set_title('stress level')
 axes[0].legend()
 
-# Sleep comparison
 axes[1].hist(df['sleep_hours'], bins=10,
              color='steelblue', edgecolor='white')
-axes[1].axvline(x=sleep, color='black',
-                linestyle='--', linewidth=2,
-                label=f'You ({sleep} hrs)')
-axes[1].set_title('Sleep Hours')
+axes[1].axvline(x=sleep, color='black', linestyle='--',
+                linewidth=2, label=f'you ({sleep} hrs)')
+axes[1].set_title('sleep hours')
 axes[1].legend()
 
 plt.tight_layout()
 st.pyplot(fig)
 
 st.divider()
-st.caption("EmoDriven — built by Rahul Tathod | Data Science Project")
+st.caption("eModriven — built by rahul tathod | data science project")
