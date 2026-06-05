@@ -47,3 +47,4 @@ None_Decides_Consciously/
 | Day 8 | Intervention Recommender | Built rule based recommender that gives personalized action plan for each student type |
 | Day 9 | Streamlit App | Built live web app with sliders,student type detection, action plan and comparison charts |
      -AI counselor integration in progress ..
+| Day 10 | Final App | Streamlit web app complete with Groq AI counselor, live predictions, comparison charts |
